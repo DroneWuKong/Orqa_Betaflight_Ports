@@ -85,6 +85,11 @@ are deleted for retention. Repeated cycles retain separate archive copies.
 the FC recorded every sample or that a flight was safe. Device restart/change,
 inventory changes, short/compressed replies and mismatched second reads all fail.
 
+Only treat a capture as finalized when its matching JSON receipt exists and
+the checksum matches. Receipt publication happens last; a crash may leave a
+data file with only `.json.partial` metadata. Keep it for inspection rather
+than treating it as verified. This package is GPL-3.0-or-later; see COPYING.
+
 If mounting fails, fix the actual SD mount rather than creating a fallback log
 directory. If no MSP reply arrives, check UART ownership, baud, UART4 MSP and
 firmware identity. The service never stops other processes to acquire the UART.
