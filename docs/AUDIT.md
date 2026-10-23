@@ -22,3 +22,12 @@ Reviewed changes:
 No flight-controller hardware was flashed. See CI for actual build outcomes.
 Pin assertions and artifact tests protect against regression but do not prove
 electrical wiring, DMA behavior under load, or correct body-frame axes.
+
+The APB companion package implements MSP disarmed Blackbox offload. UART4 MSP
+is enabled for fresh defaults at upstream's 115200 baud; saved configurations
+are preserved. The reader uses the pinned firmware's variable-length,
+uncompressed DATAFLASH_READ replies and BOXIDS-derived ARM flag. Two full reads,
+equal SHA256, stable flash inventory and unchanged device UID gate publication.
+It neither erases flash nor issues configuration/arming commands. The shared
+SD guard/mount repair derives from this account's PX4 companion work; the
+Blackbox wire protocol and runtime are separate. See companion/apb/README.md.

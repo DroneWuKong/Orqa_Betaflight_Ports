@@ -1,0 +1,17 @@
+[Unit]
+Description=Orqa APB disarmed Blackbox SD offload (no erase)
+
+[Service]
+Type=simple
+ExecStart=/opt/orqa-betaflight-logger/venv/bin/python /usr/local/lib/orqa-betaflight/archive.py --watch
+Restart=on-failure
+RestartSec=30
+Environment=PYTHONUNBUFFERED=1
+Nice=10
+NoNewPrivileges=true
+ProtectHome=true
+ProtectSystem=full
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

@@ -135,6 +135,7 @@ class BoardTests(unittest.TestCase):
             self.assertNotIn("#define SERVO3_PIN", apb)
             self.assertRegex(apb, r"#define UART4_TX_PIN\s+PC10")
             self.assertRegex(apb, r"#define UART4_RX_PIN\s+PC11")
+            self.assertRegex(apb, r"#define MSP_UART\s+SERIAL_PORT_UART4")
             self.assertIn("ORQA_APB_IMU_ICM42688P", apb)
             self.assertRegex(f4, r"#define FLASH_SPI_INSTANCE\s+SPI3")
             self.assertRegex(f4, r"#define MAX7456_SPI_INSTANCE\s+SPI2")
