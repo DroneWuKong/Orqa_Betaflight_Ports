@@ -72,7 +72,7 @@ From this repository root:
 ~~~sh
 python3 -m venv .venv
 . .venv/bin/activate
-pip install -r requirements-build.txt
+pip install -r requirements-build.txt -r companion/apb/requirements.txt
 python scripts/build.py toolchain work/tools
 export PATH="$PWD/work/tools/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin:$PATH"
 python scripts/build.py prepare work/h743
