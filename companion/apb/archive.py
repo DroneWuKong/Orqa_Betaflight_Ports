@@ -38,7 +38,10 @@ class MSP:
             self.serial.write(packet)
             deadline = time.monotonic() + self.timeout
             while time.monotonic() < deadline:
-                self.buffer.extend(self.serial.read(256))
+                # read(256) waits for timeout on every smaller MSP reply.
+                # Block for one byte when idle, otherwise drain only ready bytes.
+                waiting = self.serial.in_waiting
+                self.buffer.extend(self.serial.read(max(1, min(256, waiting))))
                 while len(self.buffer) >= 6:
                     index = self.buffer.find(b"$M")
                     if index < 0:

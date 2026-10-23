@@ -152,13 +152,50 @@ class FakeSerial:
         return len(packet)
 
     def read(self, count):
-        result = bytes(self.output[:7])  # exercise fragmented frames
-        del self.output[:7]
+        count = min(count, 7)  # exercise fragmented frames
+        result = bytes(self.output[:count])
+        del self.output[:count]
         return result
+
+    @property
+    def in_waiting(self):
+        return len(self.output)
 
 
 class BlackboxTests(StorageFixture):
     raw = b"H Product:Blackbox flight data recorder by Nicholas Sherlock\n" + bytes(range(256))*2
+
+    def test_real_pyserial_pty_transport(self):
+        import archive as a
+        import serial
+        import threading
+        master, slave = os.openpty()
+        uart = serial.Serial(os.ttyname(slave), 115200, timeout=0.05)
+        errors = []
+        def fc():
+            try:
+                for _ in range(20):
+                    data = b""
+                    while len(data) < 6:
+                        data += os.read(master, 6-len(data))
+                    if data != a.frame(a.API):
+                        raise AssertionError("unexpected command on PTY")
+                    os.write(master, a.frame(a.API, bytes([0,1,48]), b">"))
+            except BaseException as error:
+                errors.append(error)
+        worker = threading.Thread(target=fc, daemon=True)
+        worker.start()
+        try:
+            client = a.MSP(uart)
+            for _ in range(20):
+                self.assertEqual(client.request(a.API), bytes([0,1,48]))
+            worker.join(3)
+            self.assertFalse(worker.is_alive())
+            self.assertEqual(errors, [])
+        finally:
+            uart.close()
+            os.close(master)
+            os.close(slave)
 
     def recorder(self, store, **kwargs):
         import archive as a
