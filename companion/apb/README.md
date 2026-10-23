@@ -1,5 +1,9 @@
 # APB Blackbox archive to i.MX microSD
 
+**Start here:** [one-command setup and status](QUICKSTART.md). The common
+`easy.py` tool handles dependencies, installation and explicit bench activation.
+The detailed manual procedure below remains available.
+
 This package automatically copies Betaflight's onboard Blackbox flash to the
 Linux-owned SD **while disarmed**. It implements MSP framing/checksums, validates
 BTFL firmware identity/API/device UID, locates the actual ARM mode bit, checks
