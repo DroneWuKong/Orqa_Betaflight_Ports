@@ -45,7 +45,7 @@ See [audit/provenance](docs/AUDIT.md), [bench checks](docs/TESTING.md) and
 
 ## Downloads
 
-Persistent downloads: [v0.1.0-rc1 prerelease](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/releases/tag/v0.1.0-rc1).
+Persistent downloads: [v0.1.0-rc2 prerelease](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/releases/tag/v0.1.0-rc2).
 Choose the matching `.hex`; `companion-apb.tar.gz` supplies the APB Linux archive
 service. Verify downloads with `SHA256SUMS`. These are hardware-unvalidated
 bench-test builds.
