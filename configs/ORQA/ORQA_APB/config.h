@@ -166,7 +166,8 @@
 #define PINIO1_BOX                      43
 #define BOX_USER4_NAME                  "CAM SWITCH"
 
-/* Board defaults. UART4 remains mapped for companion-link configuration. */
+/* Companion Blackbox offload: MSP UART4, upstream default 115200 baud. */
+#define MSP_UART                        SERIAL_PORT_UART4
 #define DEFAULT_RX_FEATURE              FEATURE_RX_SERIAL
 #define SERIALRX_UART                   SERIAL_PORT_USART3
 #define SERIALRX_PROVIDER               SERIALRX_GHST
