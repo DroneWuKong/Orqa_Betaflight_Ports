@@ -1,0 +1,213 @@
+{
+  "audit_date": "2026-10-24",
+  "release_url": "https://github.com/DroneWuKong/Orqa_Betaflight_Ports/releases/tag/v0.1.0-rc3",
+  "verification": {
+    "repository": "Orqa_Betaflight_Ports",
+    "tag": "v0.1.0-rc3",
+    "port_revision": "ca30cf5cba1fc0ab74cc147ea2fd26707277fd74",
+    "assets_downloaded": 23,
+    "checksum_entries_verified": 22,
+    "manifests_verified": 5,
+    "source_input_hash_comparisons": 95,
+    "generated_bootloader_inputs_verified": [],
+    "companion_files_match_tag": 12,
+    "full_source_files_match_tag": 33,
+    "clean_and_repeat_staging": "PASS",
+    "firmware_payloads_verified": [
+      "h743-icm42688.bin",
+      "apb-mpu6000-icm42605.bin",
+      "apb-icm42688.bin",
+      "f405-mpu6000.bin",
+      "f405-icm42688.bin"
+    ],
+    "hardware_tested": false,
+    "companion_sha256": "79c214bb0c2cf8dc5495ef04b49d9a78c5e1dad9145f8791c9f9f8b7ce124ab0"
+  },
+  "assets": [
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "apb-icm42688.bin",
+      "size": 841153,
+      "sha256": "f5517e9c851180fcbee57b11ec247a3f92c77be3fe899d65e8e02170015bf6d1",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "apb-icm42688.elf",
+      "size": 846604,
+      "sha256": "4d2658a6e1324b60e919c21c438e73ac1ccd033a4f858d899f499206c10d01ed",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "apb-icm42688.hex",
+      "size": 1630566,
+      "sha256": "8ec77436769dab060a1efce27219d4afe328c9554ac65f02ce9711edfa07dcc2",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "apb-icm42688.manifest.json",
+      "size": 5103,
+      "sha256": "2a06ace450993be6aa2c555a72d33dff83122ccf71374d4b15904cca63cff1b5",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "apb-mpu6000-icm42605.bin",
+      "size": 841625,
+      "sha256": "53345872145dcad541c562329adbd0f7792d0b69d71a66260d09a1c849d6a205",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "apb-mpu6000-icm42605.elf",
+      "size": 846800,
+      "sha256": "4ccf5c92521c971c67005a51b5fc4ad3b3ff6a475485caa6d4d5fc7d77370ca8",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "apb-mpu6000-icm42605.hex",
+      "size": 1631900,
+      "sha256": "72b496d1f9b9497a0daca483584e1b1dad20d5e0070ab8e3853b41b87b420456",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "apb-mpu6000-icm42605.manifest.json",
+      "size": 5113,
+      "sha256": "4733d7ca9015e181f6d2c158b956bcbe6ca2bcff452eb7e5ca2dc1848956c7b4",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "companion-apb.tar.gz",
+      "size": 29224,
+      "sha256": "79c214bb0c2cf8dc5495ef04b49d9a78c5e1dad9145f8791c9f9f8b7ce124ab0",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "f405-icm42688.bin",
+      "size": 574989,
+      "sha256": "965dc388986f30ef00190f5dec736bbbaf167b2533e144062e5371dde7799366",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "f405-icm42688.elf",
+      "size": 784764,
+      "sha256": "53b13a25304f88ccab8ad9c07260becb8d7d4fb7dc2d3f09861a121a245d7495",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "f405-icm42688.hex",
+      "size": 1526321,
+      "sha256": "8e3835ac13563e464ce34009e97b8e8416a3c661ef9cf8570168f4cb0a0a8667",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "f405-icm42688.manifest.json",
+      "size": 5108,
+      "sha256": "c6bd7cbf3453ea08efffd9aa3b4075422c389a7ada82cde5aed79fcb7eaab6fa",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "f405-mpu6000.bin",
+      "size": 574589,
+      "sha256": "28a60fceaaab19ac9c6c51891792fb34e2bde4220e9710ed29acd2b36f5297c1",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "f405-mpu6000.elf",
+      "size": 784664,
+      "sha256": "a0795bc637348a650ff063ef9822097f6ce604ccebef0a1826ecdc69c39ba7d0",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "f405-mpu6000.hex",
+      "size": 1525196,
+      "sha256": "597498f05b0e57d7bb06ba5656b0a3d2bb9a85aaf307d0b1e0c97c7c4cdb9b28",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "f405-mpu6000.manifest.json",
+      "size": 5081,
+      "sha256": "b1a52d0c16718e5a798a383a0fb5dd717da43ababf0d4a2bcf2b63a1954200ec",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "h743-icm42688.bin",
+      "size": 865613,
+      "sha256": "eb482e713b0598dc4e795f1564e16f80fde75e24b22f4401a3c55a2736b30d23",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "h743-icm42688.elf",
+      "size": 881920,
+      "sha256": "a7e60e24a86e6bbc3801565b96b4f88c7c0d3ce94e5890520e452957a81845d4",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "h743-icm42688.hex",
+      "size": 1699393,
+      "sha256": "0451f0b574a37ad847b43fc7c0d60e604172188d177aad847fd8111899badac5",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "h743-icm42688.manifest.json",
+      "size": 5086,
+      "sha256": "d147d042562fe4ea39ca47cea2ea53677ecfa1329eff81cec16201a7970f152a",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "port-source.tar.gz",
+      "size": 66611,
+      "sha256": "1019e35a543cf65b6b872ba0c99895730e20af0699550566c8733c84f50a1ffb",
+      "api_match": true,
+      "size_match": true
+    },
+    {
+      "repo": "Orqa_Betaflight_Ports",
+      "name": "SHA256SUMS",
+      "size": 1922,
+      "sha256": "eb7011e10568e7cc59f008f79a1f1f21aaed8c20c76d9d11b222fba96b6f3383",
+      "api_match": true,
+      "size_match": true
+    }
+  ],
+  "physical_apb_tests": "NOT TESTED"
+}
