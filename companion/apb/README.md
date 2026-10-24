@@ -109,6 +109,9 @@ router only after changing the FC back to compatible firmware/serial settings.
 
 ## Validation
 
+For exact disarmed logging acceptance and evidence, use
+[BENCH_ACCEPTANCE.md](BENCH_ACCEPTANCE.md).
+
 Run `python -m unittest discover -s tests -v` from the repository. Host tests
 exercise fragmented/corrupt MSP replies, readonly-command enforcement, wrong
 firmware/UID, re-arming mid-transfer, changed flash data, short writes, fsync
