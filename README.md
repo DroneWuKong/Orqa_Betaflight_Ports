@@ -8,6 +8,31 @@ review-gated upstream updates for Orqa controllers.
 **Status: experimental, hardware-unvalidated.** This is a focused overlay,
 not an official Orqa release. Passing CI is not proof of flight safety.
 
+## Download compiled firmware
+
+Match the **board and sensor population**, then download the firmware from the
+corresponding column. Do not choose by MCU alone. Flash the `.hex` file through
+Betaflight Configurator's local-firmware option.
+
+| Hardware | Sensors | Betaflight 2026.6.2 (persistent direct HEX) | Betaflight 2025.12.5 (verified CI bundle) |
+|---|---|---|---|
+| H7 QuadCore | dual ICM42688P | [Download `.hex`](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/releases/download/v0.1.0-rc3/h743-icm42688.hex) | [Download ZIP containing `.hex`](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/actions/runs/41098904055/artifacts/12996799459) |
+| APB | MPU6000 + ICM42605 | [Download `.hex`](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/releases/download/v0.1.0-rc3/apb-mpu6000-icm42605.hex) | [Download ZIP containing `.hex`](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/actions/runs/41098904055/artifacts/12996564892) |
+| APB | dual ICM42688P | [Download `.hex`](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/releases/download/v0.1.0-rc3/apb-icm42688.hex) | [Download ZIP containing `.hex`](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/actions/runs/41098904055/artifacts/12996579953) |
+| F405 Pro | MPU6000 | [Download `.hex`](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/releases/download/v0.1.0-rc3/f405-mpu6000.hex) | [Download ZIP containing `.hex`](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/actions/runs/41098904055/artifacts/12997302327) |
+| F405 Pro | ICM42688P | [Download `.hex`](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/releases/download/v0.1.0-rc3/f405-icm42688.hex) | [Download ZIP containing `.hex`](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/actions/runs/41098904055/artifacts/12997561481) |
+
+The 2025.12 links require GitHub sign-in and expire on November 29, 2026. If a
+link has expired, open the [latest successful Build and verify run](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/actions/workflows/build.yml?query=branch%3Amain+is%3Asuccess)
+and download the artifact whose name matches `firmware-2025.12-<build-ID>`.
+Each CI bundle contains `.hex`, `.bin`, `.elf`, a provenance manifest and
+`SHA256SUMS`. Persistent 2026.6.2 manifests, checksums and companion files are
+on the [v0.1.0-rc3 release page](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/releases/tag/v0.1.0-rc3).
+
+**These images start at `0x08000000` and are not ArduPilot/PX4 application
+images.** Back up settings and keep known-good recovery firmware before changing
+firmware families. Never flash a build for a different board or sensor variant.
+
 ## Targets
 
 | Build ID | Hardware / sensor population |
@@ -53,26 +78,6 @@ See the [APB quick start](companion/apb/QUICKSTART.md): one setup command, then
 `status` and `logs`. Use the matching companion package on the i.MX; flashing
 the FC alone does not install Linux logging. Older tagged bundles without
 `easy.py` require the current source/CI package.
-
-## Downloads
-
-Persistent downloads: [v0.1.0-rc3 prerelease](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/releases/tag/v0.1.0-rc3).
-Choose the matching `.hex`; `companion-apb.tar.gz` supplies the APB Linux archive
-service. Verify downloads with `SHA256SUMS`. That prerelease predates the
-2025.12 compatibility line and contains only the default 2026.6 builds; use a
-newer verified CI run or prerelease for 2025.12 artifacts. These are
-hardware-unvalidated bench-test builds.
-
-Alternatively use the [latest successful Actions build](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/actions/workflows/build.yml)
-and download the matching firmware-<build-ID> artifact. GitHub sign-in is
-required, and artifacts expire after 30 days. [Tagged prereleases](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/releases)
-appear only after manual approval.
-
-Each artifact contains .hex, .bin, .elf, a provenance manifest and SHA256SUMS.
-Prefer the .hex through Betaflight Configurator's local-firmware path.
-**These images start at 0x08000000 and are not ArduPilot/PX4 application images.**
-Changing firmware families can overwrite the installed bootloader and settings.
-Back up first; do not send these through an ArduPilot/PX4 uploader.
 
 ## Supported Betaflight lines
 
