@@ -26,8 +26,13 @@ def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def lock():
-    return json.loads((ROOT / "upstream.lock.json").read_text())
+def lock(path=None):
+    path = Path(path) if path else ROOT / "upstream.lock.json"
+    return json.loads(path.read_text())
+
+
+def artifact_stem(config, target):
+    return config.get("artifact_prefix", "") + target["id"]
 
 
 def verify_revision(source, config):
@@ -47,7 +52,9 @@ def prepare(source, config):
                    "modules/DroneCAN", "modules/gtest", "modules/littlefs", "modules/lwip",
                    "modules/CrashDebug"]
     else:
-        modules = ["src/config", "lib/modules/dronecan/libcanard"]
+        # DroneCAN became a separate submodule after the 2025.12 line.
+        modules = [path for path in ("src/config", "lib/modules/dronecan/libcanard")
+                   if (source / path).exists()]
     run("git", "submodule", "update", "--init", "--recursive", "--depth", "1", *modules, cwd=source)
     pending = []
     for patch in sorted((ROOT / "patches").glob("*.patch")):
@@ -126,7 +133,7 @@ def check_elf(elf, target):
         return {"flash_end_used": end, "physical_flash_free": target["flash_end"] - end}
 
 
-def collect(source, target, config, out):
+def collect(source, target, config, out, lock_path=ROOT / "upstream.lock.json"):
     if out.exists() and any(out.iterdir()):
         raise ValueError("Artifact directory must be empty; do not mix builds")
     out.mkdir(parents=True, exist_ok=True)
@@ -165,9 +172,10 @@ def collect(source, target, config, out):
     validate_image(data, target)
     budget = check_elf(elf, target)
     hashes = {}
+    stem = artifact_stem(config, target)
     for original in originals:
         suffix = ".elf" if original == elf else original.suffix
-        dest = out / (target["id"] + suffix)
+        dest = out / (stem + suffix)
         shutil.copy2(original, dest)
         hashes[dest.name] = digest(dest)
     inputs = {}
@@ -175,7 +183,8 @@ def collect(source, target, config, out):
         for path in sorted((ROOT / folder).rglob("*")):
             if path.is_file() and "__pycache__" not in path.parts:
                 inputs[str(path.relative_to(ROOT))] = digest(path)
-    inputs["upstream.lock.json"] = digest(ROOT / "upstream.lock.json")
+    lock_path = Path(lock_path)
+    inputs[str(lock_path.relative_to(ROOT))] = digest(lock_path)
     manifest = {
         "target": target, "upstream": config, "inputs": inputs, "artifacts": hashes,
         "port_revision": run("git", "rev-parse", "HEAD", cwd=ROOT, capture=True).strip(),
@@ -185,7 +194,7 @@ def collect(source, target, config, out):
         "compiler": run("arm-none-eabi-gcc", "--version", capture=True).splitlines()[0],
         "hardware_validated": False, "budget": budget,
     }
-    path = out / (target["id"] + ".manifest.json")
+    path = out / (stem + ".manifest.json")
     path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     hashes[path.name] = digest(path)
     (out / "SHA256SUMS").write_text("".join(f"{sha}  {name}\n" for name, sha in sorted(hashes.items())))
@@ -203,8 +212,21 @@ def build(source, target, config, jobs):
         if (source / "obj").exists():
             raise ValueError("Use a fresh checkout per target; obj already exists")
         flags = "-D" + target["define"] if target["define"] else ""
-        run("make", "-j" + str(jobs), "CONFIG=" + target["board"],
-            "BETAFLIGHT_CONFIG=" + str(ROOT), "EXTRA_FLAGS=" + flags, cwd=source)
+        temporary = None
+        config_root = ROOT
+        try:
+            if config.get("config_layout") == "flat":
+                # 2025.12 accepts only configs/<board>; later lines also accept
+                # configs/<manufacturer>/<board>. Stage the same reviewed files
+                # rather than maintaining a second copy that could drift.
+                temporary = tempfile.TemporaryDirectory()
+                config_root = Path(temporary.name)
+                shutil.copytree(ROOT / "configs/ORQA", config_root / "configs")
+            run("make", "-j" + str(jobs), "CONFIG=" + target["board"],
+                "BETAFLIGHT_CONFIG=" + str(config_root), "EXTRA_FLAGS=" + flags, cwd=source)
+        finally:
+            if temporary:
+                temporary.cleanup()
     else:
         run("./waf", "configure", "--board", target["board"], cwd=source)
         run("./waf", target["vehicle"], "-j" + str(jobs), cwd=source)
@@ -215,10 +237,17 @@ def main():
     parser.add_argument("action", choices=["prepare", "toolchain", "build", "collect"])
     parser.add_argument("directory", type=Path)
     parser.add_argument("--target")
+    parser.add_argument("--lock", type=Path, default=ROOT / "upstream.lock.json",
+                        help="Pinned upstream lock to build (default: upstream.lock.json)")
     parser.add_argument("--output", type=Path, default=ROOT / "artifacts")
     parser.add_argument("--jobs", type=int, default=2)
     args = parser.parse_args()
-    config = lock()
+    lock_path = args.lock.resolve()
+    try:
+        lock_path.relative_to(ROOT)
+    except ValueError:
+        parser.error("Upstream lock must be inside this repository")
+    config = lock(lock_path)
     directory = args.directory.resolve()
     target = next((t for t in config["targets"] if t["id"] == args.target), None)
     if args.action in ("build", "collect") and target is None:
@@ -230,7 +259,7 @@ def main():
     elif args.action == "build":
         build(directory, target, config, args.jobs)
     else:
-        collect(directory, target, config, args.output.resolve())
+        collect(directory, target, config, args.output.resolve(), lock_path)
 
 
 if __name__ == "__main__":

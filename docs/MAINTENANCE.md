@@ -1,7 +1,8 @@
 # Maintenance and releases
 
-The scheduled workflow checks upstream stable releases every Monday at 06:23 UTC.
-It proposes only newer numeric releases; it does not track development branches,
+The scheduled workflow checks the default upstream lock every Monday at 06:23 UTC.
+It proposes only newer numeric releases for that default line; the explicit
+2025.12 compatibility lock is updated only by reviewed changes. It does not track development branches,
 merge PRs, approve reviews, update toolchains silently, publish releases or flash
 hardware. ArduPilot proposals require matching Copter/Plane versions and commits.
 A patch conflict or compiler incompatibility blocks the build for human review.
@@ -14,11 +15,11 @@ notifications; schedules may be delayed or disabled by GitHub for inactive repos
 
 ## Review an update
 
-1. Read upstream release notes and compare the old/new commits in the lock.
+1. Read upstream release notes and compare the old/new commits in the affected lock.
 2. Review patch applicability and all changes to sensor, serial, storage,
    timer/DMA, bootloader and parameter behavior.
 3. Require the complete **All firmware checks** status on the current PR commit.
-4. Review every target manifest and any change in flash usage.
+4. Review every target manifest from every supported lock and any change in flash usage.
    Artifact checks require at least 16 KiB of physical flash headroom; linker
    scripts separately enforce reserved parameter/config regions.
 5. Re-run the relevant physical bench checks; do not inherit qualification
@@ -41,7 +42,7 @@ CI runs companion protocol/storage tests alongside firmware checks. Changes to
 the companion's wire protocol or runtime dependencies require host fault tests
 and a fresh physical bench check; neither inherits qualification from firmware CI.
 Source reproduction requires the exact upstream commit/submodule pins in the
-lock plus this repository at the manifest's port revision. Port source and GPL
+manifest's named lock plus this repository at the manifest's port revision. Port source and GPL
 license are included in tagged releases. Build tools are checksum-verified;
 host OS packages are not a bit-for-bit container snapshot, so do not infer
 byte-identical outputs across arbitrary host environments.

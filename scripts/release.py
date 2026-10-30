@@ -16,8 +16,23 @@ def gh(*args):
     return subprocess.check_output(["gh", *args], text=True).strip()
 
 
-def verify(folder, config, revision):
-    expected = {t["id"]: t for t in config["targets"]}
+def load_configs():
+    return [json.loads(path.read_text()) for path in sorted(ROOT.glob("upstream*.lock.json"))]
+
+
+def config_key(config):
+    return json.dumps(config, sort_keys=True, separators=(",", ":"))
+
+
+def artifact_stem(config, target):
+    return config.get("artifact_prefix", "") + target["id"]
+
+
+def verify(folder, configs, revision):
+    if isinstance(configs, dict):
+        configs = [configs]
+    expected = {(config_key(config), target["id"]): (config, target)
+                for config in configs for target in config["targets"]}
     manifests = list(folder.rglob("*.manifest.json"))
     if len(manifests) != len(expected):
         raise ValueError("Incomplete build matrix")
@@ -26,15 +41,16 @@ def verify(folder, config, revision):
     for path in manifests:
         data = json.loads(path.read_text())
         target = data["target"]["id"]
-        if target not in expected or target in seen or data["target"] != expected[target]:
+        key = (config_key(data["upstream"]), target)
+        if key not in expected or key in seen or data["target"] != expected[key][1]:
             raise ValueError("Unexpected or duplicate target")
-        seen.add(target)
+        seen.add(key)
+        config, expected_target = expected[key]
         if data["port_revision"] != revision or data["port_worktree_dirty"] or data["hardware_validated"]:
             raise ValueError("Dirty, mismatched or incorrectly qualified build")
-        if data["upstream"] != config:
-            raise ValueError("Upstream pin mismatch")
         suffixes = {".bin", ".elf", ".hex" if config["kind"] == "betaflight" else ".apj"}
-        if set(data["artifacts"]) != {target + suffix for suffix in suffixes}:
+        stem = artifact_stem(config, expected_target)
+        if set(data["artifacts"]) != {stem + suffix for suffix in suffixes}:
             raise ValueError("Unexpected firmware filenames")
         for name, sha in data["artifacts"].items():
             artifact = path.parent / name
@@ -59,12 +75,12 @@ def main():
             or run["head_branch"] != "main" or run["event"] != "push"
             or run["path"] != ".github/workflows/build.yml"):
         raise ValueError("Select a successful main push build for this exact commit")
-    config = json.loads((ROOT / "upstream.lock.json").read_text())
+    configs = load_configs()
     with tempfile.TemporaryDirectory() as tmp:
         folder = Path(tmp)
         gh("run", "download", str(args.run_id), "--repo", repo,
            "--pattern", "firmware-*", "--dir", str(folder))
-        assets = verify(folder, config, revision)
+        assets = verify(folder, configs, revision)
         sums = folder / "SHA256SUMS"
         sums.write_text("".join(f"{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}\n"
                                for p in sorted(assets)))

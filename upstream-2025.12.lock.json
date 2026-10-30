@@ -1,0 +1,52 @@
+{
+  "kind": "betaflight",
+  "series": "2025.12",
+  "artifact_prefix": "2025.12.5-",
+  "config_layout": "flat",
+  "repository": "betaflight/betaflight",
+  "tag": "2025.12.5",
+  "revision": "7348054f268f0058574719c134e9f149565bb8ea",
+  "toolchain": {
+    "version": "13.3.1",
+    "url": "https://developer.arm.com/-/media/Files/downloads/gnu/13.3.rel1/binrel/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi.tar.xz",
+    "sha256": "95c011cee430e64dd6087c75c800f04b9c49832cc1000127a92a97f9c8d83af4",
+    "directory": "arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi"
+  },
+  "targets": [
+    {
+      "id": "h743-icm42688",
+      "board": "ORQA_H743",
+      "define": "",
+      "flash_start": 134217728,
+      "flash_end": 136314880
+    },
+    {
+      "id": "apb-mpu6000-icm42605",
+      "board": "ORQA_APB",
+      "define": "",
+      "flash_start": 134217728,
+      "flash_end": 136314880
+    },
+    {
+      "id": "apb-icm42688",
+      "board": "ORQA_APB",
+      "define": "ORQA_APB_IMU_ICM42688P",
+      "flash_start": 134217728,
+      "flash_end": 136314880
+    },
+    {
+      "id": "f405-mpu6000",
+      "board": "ORQA_F405",
+      "define": "",
+      "flash_start": 134217728,
+      "flash_end": 135266304
+    },
+    {
+      "id": "f405-icm42688",
+      "board": "ORQA_F405",
+      "define": "ORQA_F405_IMU_ICM42688P",
+      "flash_start": 134217728,
+      "flash_end": 135266304
+    }
+  ]
+}

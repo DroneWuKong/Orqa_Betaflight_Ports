@@ -3,6 +3,14 @@
 Initial upstream: betaflight/betaflight tag 2026.6.2, commit
 e0b7bb01b17b21351057e9ead2d1ab39dd44fa16. Its config submodule pin is retained.
 
+The parallel compatibility line pins betaflight/betaflight tag 2025.12.5,
+commit 7348054f268f0058574719c134e9f149565bb8ea. It uses that tag's own config
+submodule pin. Unlike 2026.6, this source line has no DroneCAN libcanard
+submodule, so preparation hydrates only submodules declared by that release.
+The same reviewed board overlays are compiled independently for each line and
+the 2025.12 artifacts carry a version prefix. A successful build on either line
+does not transfer hardware qualification from the other.
+
 Board configurations derive from DroneWuKong/Orqa_H7_PX4_Ports's prior
 codex/orqa-f405-bf-2026.6 work (reference/betaflight/2026.6/configs/ORQA).
 The imported Windows checkout was not reset or modified. CRLF was normalized
