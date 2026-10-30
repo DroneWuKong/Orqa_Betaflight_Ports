@@ -1,4 +1,5 @@
 import importlib.util
+import copy
 import json
 from pathlib import Path
 import struct
@@ -116,11 +117,21 @@ class ImageTests(unittest.TestCase):
 
 class BoardTests(unittest.TestCase):
     def test_target_ids_unique(self):
-        config = build.lock()
-        ids = [t["id"] for t in config["targets"]]
-        self.assertEqual(len(ids), len(set(ids)))
-        self.assertRegex(config["revision"], "^[a-f0-9]{40}$")
-        self.assertRegex(config["toolchain"]["sha256"], "^[a-f0-9]{64}$")
+        configs = [build.lock(path) for path in sorted(ROOT.glob("upstream*.lock.json"))]
+        self.assertEqual({config["series"] for config in configs}, {"2025.12", "2026.6"})
+        stems = []
+        for config in configs:
+            ids = [t["id"] for t in config["targets"]]
+            self.assertEqual(len(ids), len(set(ids)))
+            self.assertRegex(config["revision"], "^[a-f0-9]{40}$")
+            self.assertRegex(config["toolchain"]["sha256"], "^[a-f0-9]{64}$")
+            stems.extend(build.artifact_stem(config, target) for target in config["targets"])
+        self.assertEqual(len(stems), len(set(stems)))
+
+    def test_2025_12_pin(self):
+        config = build.lock(ROOT / "upstream-2025.12.lock.json")
+        self.assertEqual(config["tag"], "2025.12.5")
+        self.assertEqual(config["revision"], "7348054f268f0058574719c134e9f149565bb8ea")
 
     def test_board_regressions(self):
         if build.lock()["kind"] == "betaflight":
@@ -185,6 +196,35 @@ class ReleaseTests(unittest.TestCase):
 
     def test_complete_artifacts(self):
         self.assertEqual(len(self.verify()), 4)
+
+    def test_versioned_artifact_names(self):
+        import hashlib
+        self.config["artifact_prefix"] = "2025.12.5-"
+        hashes = {}
+        for name in list(self.manifest["artifacts"]):
+            prefixed = "2025.12.5-" + name
+            (self.folder / name).rename(self.folder / prefixed)
+            hashes[prefixed] = hashlib.sha256(b"test fixture").hexdigest()
+        self.manifest["upstream"] = self.config
+        self.manifest["artifacts"] = hashes
+        self.assertEqual(len(self.verify()), 4)
+
+    def test_same_target_from_two_upstream_lines(self):
+        import hashlib
+        (self.folder / "board.manifest.json").write_text(json.dumps(self.manifest))
+        older = copy.deepcopy(self.config)
+        older.update(series="2025.12", artifact_prefix="2025.12.5-")
+        older_folder = self.folder / "older"
+        older_folder.mkdir()
+        hashes = {}
+        for suffix in (".hex", ".bin", ".elf"):
+            name = "2025.12.5-board" + suffix
+            (older_folder / name).write_bytes(b"older fixture")
+            hashes[name] = hashlib.sha256(b"older fixture").hexdigest()
+        manifest = copy.deepcopy(self.manifest)
+        manifest.update(upstream=older, artifacts=hashes)
+        (older_folder / "2025.12.5-board.manifest.json").write_text(json.dumps(manifest))
+        self.assertEqual(len(self.release.verify(self.folder, [self.config, older], self.revision)), 8)
 
     def test_missing_target(self):
         with self.assertRaises(ValueError):

@@ -1,5 +1,7 @@
 {
   "kind": "betaflight",
+  "series": "2026.6",
+  "artifact_prefix": "",
   "repository": "betaflight/betaflight",
   "tag": "2026.6.2",
   "revision": "e0b7bb01b17b21351057e9ead2d1ab39dd44fa16",

@@ -19,6 +19,10 @@ not an official Orqa release. Passing CI is not proof of flight safety.
 | f405-icm42688 | F405 Pro, ICM42688P |
 
 Variants have different sensor rotations. Do not choose by MCU alone.
+Every target is built against both supported upstream lines: Betaflight
+2026.6.2 and 2025.12.5. The 2025.12 artifacts are prefixed `2025.12.5-` so
+firmware from the two lines cannot silently overwrite or masquerade as each
+other.
 H743's inherited Betaflight rotations differ from some ArduPilot/PX4 definitions:
 they are deliberately not changed without physical evidence. Older H743 MPU6000
 populations are not covered by the H743 artifact. No Wingcore fixed-wing preset
@@ -54,8 +58,10 @@ the FC alone does not install Linux logging. Older tagged bundles without
 
 Persistent downloads: [v0.1.0-rc3 prerelease](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/releases/tag/v0.1.0-rc3).
 Choose the matching `.hex`; `companion-apb.tar.gz` supplies the APB Linux archive
-service. Verify downloads with `SHA256SUMS`. These are hardware-unvalidated
-bench-test builds.
+service. Verify downloads with `SHA256SUMS`. That prerelease predates the
+2025.12 compatibility line and contains only the default 2026.6 builds; use a
+newer verified CI run or prerelease for 2025.12 artifacts. These are
+hardware-unvalidated bench-test builds.
 
 Alternatively use the [latest successful Actions build](https://github.com/DroneWuKong/Orqa_Betaflight_Ports/actions/workflows/build.yml)
 and download the matching firmware-<build-ID> artifact. GitHub sign-in is
@@ -68,11 +74,22 @@ Prefer the .hex through Betaflight Configurator's local-firmware path.
 Changing firmware families can overwrite the installed bootloader and settings.
 Back up first; do not send these through an ArduPilot/PX4 uploader.
 
+## Supported Betaflight lines
+
+| Series | Pinned release | Lock | Artifact naming |
+|---|---|---|---|
+| 2026.6 (default) | 2026.6.2 | `upstream.lock.json` | `<target>.*` |
+| 2025.12 | 2025.12.5 | `upstream-2025.12.lock.json` | `2025.12.5-<target>.*` |
+
+Both lock files pin the exact source revision and verified compiler. CI builds
+all five targets from both locks. The older line is deliberately explicit;
+omitting `--lock` continues to select the default 2026.6 line.
+
 ## Build (Linux x86_64)
 
-Pinned stable base: Betaflight 2026.6.2. The exact revision, compiler and targets
-are in [upstream.lock.json](upstream.lock.json). Use a fresh source directory
-per target to prevent stale objects crossing sensor variants.
+Pinned default base: Betaflight 2026.6.2. The exact revisions, compiler and
+targets are in `upstream*.lock.json`. Use a fresh source directory per target
+and upstream line to prevent stale objects crossing sensor variants.
 
 From this repository root:
 
@@ -86,6 +103,15 @@ python scripts/build.py prepare work/h743
 python scripts/build.py build work/h743 --target h743-icm42688
 python scripts/build.py collect work/h743 --target h743-icm42688 --output artifacts/h743
 python -m unittest discover -s tests -v
+~~~
+
+To build the matching 2025.12.5 image, use a different source/output directory
+and pass its lock to every action:
+
+~~~sh
+python scripts/build.py prepare work/2025.12-h743 --lock upstream-2025.12.lock.json
+python scripts/build.py build work/2025.12-h743 --target h743-icm42688 --lock upstream-2025.12.lock.json
+python scripts/build.py collect work/2025.12-h743 --target h743-icm42688 --lock upstream-2025.12.lock.json --output artifacts/2025.12-h743
 ~~~
 
 Requirements: Git, make, a host C compiler, tar/xz, Python and network access.

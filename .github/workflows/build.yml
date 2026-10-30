@@ -13,7 +13,7 @@ jobs:
   checks:
     runs-on: ubuntu-22.04
     outputs:
-      targets: ${{ steps.matrix.outputs.targets }}
+      builds: ${{ steps.matrix.outputs.builds }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -25,7 +25,20 @@ jobs:
       - run: python -m unittest discover -s tests -v
       - id: matrix
         run: |
-          python -c 'import json,os; c=json.load(open("upstream.lock.json")); open(os.environ["GITHUB_OUTPUT"],"a").write("targets="+json.dumps([t["id"] for t in c["targets"]])+"\n")'
+          python - <<'PY'
+          import glob
+          import json
+          import os
+
+          rows = []
+          for path in sorted(glob.glob("upstream*.lock.json")):
+              with open(path) as stream:
+                  config = json.load(stream)
+              rows.extend({"lock": path, "series": config["series"], "target": target["id"]}
+                          for target in config["targets"])
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write("builds=" + json.dumps(rows) + "\n")
+          PY
   firmware:
     needs: checks
     runs-on: ubuntu-22.04
@@ -33,7 +46,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ${{ fromJSON(needs.checks.outputs.targets) }}
+        include: ${{ fromJSON(needs.checks.outputs.builds) }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -42,23 +55,29 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install build dependencies and verified compiler
+        env:
+          LOCK_FILE: ${{ matrix.lock }}
         run: |
           python -m pip install -r requirements-build.txt
-          python scripts/build.py toolchain "$RUNNER_TEMP/toolchain"
-          python -c 'import json,os; c=json.load(open("upstream.lock.json")); open(os.environ["GITHUB_PATH"],"a").write(os.environ["RUNNER_TEMP"]+"/toolchain/"+c["toolchain"]["directory"]+"/bin\n")'
+          python scripts/build.py toolchain "$RUNNER_TEMP/toolchain" --lock "$LOCK_FILE"
+          python -c 'import json,os; c=json.load(open(os.environ["LOCK_FILE"])); open(os.environ["GITHUB_PATH"],"a").write(os.environ["RUNNER_TEMP"]+"/toolchain/"+c["toolchain"]["directory"]+"/bin\n")'
       - name: Prepare pinned upstream and reviewed patches
-        run: python scripts/build.py prepare "$RUNNER_TEMP/source"
+        env:
+          LOCK_FILE: ${{ matrix.lock }}
+        run: python scripts/build.py prepare "$RUNNER_TEMP/source" --lock "$LOCK_FILE"
       - name: Build
         env:
           TARGET_ID: ${{ matrix.target }}
-        run: python scripts/build.py build "$RUNNER_TEMP/source" --target "$TARGET_ID" --jobs 2
+          LOCK_FILE: ${{ matrix.lock }}
+        run: python scripts/build.py build "$RUNNER_TEMP/source" --target "$TARGET_ID" --lock "$LOCK_FILE" --jobs 2
       - name: Verify artifacts and write provenance
         env:
           TARGET_ID: ${{ matrix.target }}
-        run: python scripts/build.py collect "$RUNNER_TEMP/source" --target "$TARGET_ID"
+          LOCK_FILE: ${{ matrix.lock }}
+        run: python scripts/build.py collect "$RUNNER_TEMP/source" --target "$TARGET_ID" --lock "$LOCK_FILE"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: firmware-${{ matrix.target }}
+          name: firmware-${{ matrix.series }}-${{ matrix.target }}
           path: artifacts/
           if-no-files-found: error
           retention-days: 30

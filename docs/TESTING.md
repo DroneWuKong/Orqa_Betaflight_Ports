@@ -21,8 +21,9 @@ backup, power source and media model before testing.
   Verify actual i.MX UART transport, a parsed SD log and its receipt checksum.
   Exercise missing/full/read-only media, reconnect and controlled power loss.
   Host protocol tests do not establish physical persistence.
-- Retest after upstream updates, especially bootloader/layout, sensor and
-  parameter changes. Only proceed to controlled flight after bench acceptance.
+- Retest each supported upstream line independently after updates, especially
+  bootloader/layout, sensor and parameter changes. Only proceed to controlled
+  flight after bench acceptance.
 
 Keep actual logs and pass/fail/not-tested results. Never relabel a host test,
 historical build receipt or source inference as physical qualification.
