@@ -82,6 +82,7 @@
 
 /* Analog OSD on SPI3. */
 #define USE_MAX7456
+#define USE_RODS_OSD_OVERLAY
 #define MAX7456_SPI_INSTANCE            SPI3
 #define MAX7456_SPI_CS_PIN              PA15
 

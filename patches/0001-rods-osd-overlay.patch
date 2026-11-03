@@ -1,0 +1,258 @@
+diff --git a/src/main/msp/msp.c b/src/main/msp/msp.c
+index b7d5d08..2c334e2 100644
+--- a/src/main/msp/msp.c
++++ b/src/main/msp/msp.c
+@@ -4626,6 +4626,41 @@ RAM_CODE static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t
+         }
+         break;
+ 
++    case MSP2_RODS_OSD_OVERLAY:
++#if defined(USE_OSD) && defined(USE_RODS_OSD_OVERLAY)
++        {
++            // version, sequence, part index/count, flags, entry count,
++            // followed by entryCount tuples of uint16 position + uint8 glyph.
++            if (dataSize < 6) {
++                return MSP_RESULT_ERROR;
++            }
++            const uint8_t version = sbufReadU8(src);
++            const uint8_t sequence = sbufReadU8(src);
++            const uint8_t partIndex = sbufReadU8(src);
++            const uint8_t partCount = sbufReadU8(src);
++            const uint8_t flags = sbufReadU8(src);
++            const uint8_t entryCount = sbufReadU8(src);
++            if (entryCount > RODS_OSD_MAX_ENTRIES_PER_PACKET
++                || dataSize != 6U + (unsigned int)entryCount * 3U) {
++                return MSP_RESULT_ERROR;
++            }
++
++            uint16_t positions[RODS_OSD_MAX_ENTRIES_PER_PACKET];
++            uint8_t characters[RODS_OSD_MAX_ENTRIES_PER_PACKET];
++            for (uint8_t i = 0; i < entryCount; i++) {
++                positions[i] = sbufReadU16(src);
++                characters[i] = sbufReadU8(src);
++            }
++            if (!osdRodsOverlayApplyPacket(version, sequence, partIndex,
++                    partCount, flags, entryCount, positions, characters)) {
++                return MSP_RESULT_ERROR;
++            }
++        }
++        break;
++#else
++        return MSP_RESULT_ERROR;
++#endif
++
+ #ifdef USE_LED_STRIP
+     case MSP2_SET_LED_STRIP_CONFIG_VALUES:
+         ledStripConfigMutable()->ledstrip_brightness = sbufReadU8Constrained(src, LED_STRIP_BRIGHTNESS_MIN, LED_STRIP_BRIGHTNESS_MAX);
+diff --git a/src/main/msp/msp_protocol_v2_betaflight.h b/src/main/msp/msp_protocol_v2_betaflight.h
+index 3e05994..c917995 100644
+--- a/src/main/msp/msp_protocol_v2_betaflight.h
++++ b/src/main/msp/msp_protocol_v2_betaflight.h
+@@ -38,6 +38,9 @@
+ #define MSP2_CLI_SETTING_INFO               0x3011
+ #define MSP2_CLI_COMMAND                    0x3012
+ 
++// Downstream ORQA APB extension: bounded, display-only Rods overlay packets.
++#define MSP2_RODS_OSD_OVERLAY               0x30F0
++
+ // MSP2_CLI_COMMAND response flags (byte following the u16 total-length header)
+ #define MSP2_CLI_COMMAND_FLAG_TRUNCATED     (1 << 0) // output exceeded the pageable buffer
+ #define MSP2_CLI_COMMAND_FLAG_REFUSED       (1 << 1) // command refused or paging session mismatch
+diff --git a/src/main/osd/osd.c b/src/main/osd/osd.c
+index ec5f69e..e077f1c 100644
+--- a/src/main/osd/osd.c
++++ b/src/main/osd/osd.c
+@@ -160,6 +160,99 @@ static displayPort_t *osdDisplayPort;
+ static osdDisplayPortDevice_e osdDisplayPortDeviceType;
+ static bool osdIsReady;
+ 
++#ifdef USE_RODS_OSD_OVERLAY
++#define RODS_OSD_WATCHDOG_MS 500
++
++static uint8_t rodsOverlayActive[RODS_OSD_CELL_COUNT];
++static uint8_t rodsOverlayStaging[RODS_OSD_CELL_COUNT];
++static uint8_t rodsOverlaySequence;
++static uint8_t rodsOverlayExpectedPart;
++static uint8_t rodsOverlayPartCount;
++static bool rodsOverlayStagingValid;
++static bool rodsOverlayVisible;
++static timeMs_t rodsOverlayLastCommitMs;
++
++bool osdRodsOverlayApplyPacket(uint8_t version, uint8_t sequence,
++    uint8_t partIndex, uint8_t partCount, uint8_t flags, uint8_t entryCount,
++    const uint16_t *positions, const uint8_t *characters)
++{
++    const uint8_t allowedFlags = RODS_OSD_FLAG_CLEAR | RODS_OSD_FLAG_COMMIT;
++    const bool isFirst = partIndex == 0;
++    const bool isLast = partIndex == (uint8_t)(partCount - 1);
++
++    if (version != RODS_OSD_PROTOCOL_VERSION || partCount == 0
++        || partCount > RODS_OSD_MAX_PARTS || partIndex >= partCount
++        || entryCount > RODS_OSD_MAX_ENTRIES_PER_PACKET
++        || (flags & ~allowedFlags)
++        || isFirst != ((flags & RODS_OSD_FLAG_CLEAR) != 0)
++        || isLast != ((flags & RODS_OSD_FLAG_COMMIT) != 0)) {
++        rodsOverlayStagingValid = false;
++        return false;
++    }
++
++    for (uint8_t i = 0; i < entryCount; i++) {
++        if (positions[i] >= RODS_OSD_CELL_COUNT) {
++            rodsOverlayStagingValid = false;
++            return false;
++        }
++    }
++
++    if (isFirst) {
++        memset(rodsOverlayStaging, 0, sizeof(rodsOverlayStaging));
++        rodsOverlaySequence = sequence;
++        rodsOverlayExpectedPart = 0;
++        rodsOverlayPartCount = partCount;
++        rodsOverlayStagingValid = true;
++    }
++
++    if (!rodsOverlayStagingValid || sequence != rodsOverlaySequence
++        || partCount != rodsOverlayPartCount
++        || partIndex != rodsOverlayExpectedPart) {
++        rodsOverlayStagingValid = false;
++        return false;
++    }
++
++    for (uint8_t i = 0; i < entryCount; i++) {
++        rodsOverlayStaging[positions[i]] = characters[i];
++    }
++    rodsOverlayExpectedPart++;
++
++    if (isLast) {
++        memcpy(rodsOverlayActive, rodsOverlayStaging, sizeof(rodsOverlayActive));
++        rodsOverlayLastCommitMs = millis();
++        rodsOverlayVisible = true;
++        rodsOverlayStagingValid = false;
++    }
++
++    return true;
++}
++
++static void osdDrawRodsOverlay(void)
++{
++    if (!rodsOverlayVisible) {
++        return;
++    }
++
++    if ((timeMs_t)(millis() - rodsOverlayLastCommitMs) > RODS_OSD_WATCHDOG_MS) {
++        memset(rodsOverlayActive, 0, sizeof(rodsOverlayActive));
++        rodsOverlayVisible = false;
++        return;
++    }
++
++    const uint8_t cols = MIN(osdDisplayPort->cols, RODS_OSD_COLS);
++    const uint8_t rows = MIN(osdDisplayPort->rows, RODS_OSD_ROWS);
++    for (uint8_t row = 0; row < rows; row++) {
++        for (uint8_t col = 0; col < cols; col++) {
++            const uint8_t character = rodsOverlayActive[row * RODS_OSD_COLS + col];
++            if (character != 0) {
++                displayWriteChar(osdDisplayPort, col, row,
++                    DISPLAYPORT_SEVERITY_NORMAL, character);
++            }
++        }
++    }
++}
++#endif
++
+ uint16_t osdGetCapacityAlarm(void)
+ {
+     if (currentBatteryProfile && currentBatteryProfile->batteryCapacity > 0) {
+@@ -1389,6 +1482,9 @@ typedef enum {
+     // Elements are handled in two steps, drawing into a buffer, and then sending to the display
+     OSD_STATE_DRAW_ELEMENT,
+     OSD_STATE_DISPLAY_ELEMENT,
++#ifdef USE_RODS_OSD_OVERLAY
++    OSD_STATE_DRAW_RODS_OVERLAY,
++#endif
+     OSD_STATE_UPDATE_HEARTBEAT,
+     OSD_STATE_COMMIT,
+     OSD_STATE_TRANSFER,
+@@ -1601,7 +1697,11 @@ void osdUpdate(timeUs_t currentTimeUs)
+             } else
+ #endif // USE_SPEC_PREARM_SCREEN
+             {
++#ifdef USE_RODS_OSD_OVERLAY
++                osdState = OSD_STATE_DRAW_RODS_OVERLAY;
++#else
+                 osdState = OSD_STATE_COMMIT;
++#endif
+             }
+         }
+         break;
+@@ -1622,7 +1722,11 @@ void osdUpdate(timeUs_t currentTimeUs)
+                     } else
+ #endif // USE_SPEC_PREARM_SCREEN
+                     {
++#ifdef USE_RODS_OSD_OVERLAY
++                        osdState = OSD_STATE_DRAW_RODS_OVERLAY;
++#else
+                         osdState = OSD_STATE_COMMIT;
++#endif
+                     }
+                 }
+             }
+@@ -1633,12 +1737,23 @@ void osdUpdate(timeUs_t currentTimeUs)
+     case OSD_STATE_REFRESH_PREARM:
+         if (osdDrawSpec(osdDisplayPort)) {
+             // Rendering is complete
++#ifdef USE_RODS_OSD_OVERLAY
++            osdState = OSD_STATE_DRAW_RODS_OVERLAY;
++#else
+             osdState = OSD_STATE_COMMIT;
++#endif
+         }
+ 
+         break;
+ #endif // USE_SPEC_PREARM_SCREEN
+ 
++#ifdef USE_RODS_OSD_OVERLAY
++    case OSD_STATE_DRAW_RODS_OVERLAY:
++        osdDrawRodsOverlay();
++        osdState = OSD_STATE_COMMIT;
++        break;
++#endif
++
+     case OSD_STATE_COMMIT:
+         displayCommitTransaction(osdDisplayPort);
+ 
+diff --git a/src/main/osd/osd.h b/src/main/osd/osd.h
+index 8934fea..7af80e9 100644
+--- a/src/main/osd/osd.h
++++ b/src/main/osd/osd.h
+@@ -96,6 +96,17 @@ extern const char * const osdTimerSourceNames[OSD_NUM_TIMER_TYPES];
+ #define OSD_SD_COLS VIDEO_COLUMNS_SD
+ #define OSD_SD_ROWS VIDEO_LINES_PAL
+ 
++#ifdef USE_RODS_OSD_OVERLAY
++#define RODS_OSD_PROTOCOL_VERSION 1
++#define RODS_OSD_COLS 30
++#define RODS_OSD_ROWS 16
++#define RODS_OSD_CELL_COUNT (RODS_OSD_COLS * RODS_OSD_ROWS)
++#define RODS_OSD_MAX_PARTS 8
++#define RODS_OSD_MAX_ENTRIES_PER_PACKET 62
++#define RODS_OSD_FLAG_CLEAR (1 << 0)
++#define RODS_OSD_FLAG_COMMIT (1 << 1)
++#endif
++
+ // Default HD OSD canvas size to be applied unless the goggles announce otherwise
+ #define OSD_HD_COLS 53
+ #define OSD_HD_ROWS 20
+@@ -467,6 +478,12 @@ bool osdUpdateCheck(timeUs_t currentTimeUs, timeDelta_t currentDeltaTimeUs);
+ void osdUpdate(timeUs_t currentTimeUs);
+ uint16_t osdGetCapacityAlarm(void);
+ 
++#ifdef USE_RODS_OSD_OVERLAY
++bool osdRodsOverlayApplyPacket(uint8_t version, uint8_t sequence,
++    uint8_t partIndex, uint8_t partCount, uint8_t flags, uint8_t entryCount,
++    const uint16_t *positions, const uint8_t *characters);
++#endif
++
+ void osdStatSetState(uint8_t statIndex, bool enabled);
+ bool osdStatGetState(uint8_t statIndex);
+ void osdSuppressStats(bool flag);
+
