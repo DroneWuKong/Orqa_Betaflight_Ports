@@ -1,8 +1,8 @@
 diff --git a/src/main/msp/msp.c b/src/main/msp/msp.c
-index b7d5d08..2c334e2 100644
+index 61d49bf..8e76ff3 100644
 --- a/src/main/msp/msp.c
 +++ b/src/main/msp/msp.c
-@@ -4626,6 +4626,41 @@ RAM_CODE static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t
+@@ -4438,6 +4438,41 @@ RAM_CODE static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t
          }
          break;
  
@@ -43,26 +43,26 @@ index b7d5d08..2c334e2 100644
 +
  #ifdef USE_LED_STRIP
      case MSP2_SET_LED_STRIP_CONFIG_VALUES:
-         ledStripConfigMutable()->ledstrip_brightness = sbufReadU8Constrained(src, LED_STRIP_BRIGHTNESS_MIN, LED_STRIP_BRIGHTNESS_MAX);
+         ledStripConfigMutable()->ledstrip_brightness = sbufReadU8(src);
 diff --git a/src/main/msp/msp_protocol_v2_betaflight.h b/src/main/msp/msp_protocol_v2_betaflight.h
-index 3e05994..c917995 100644
+index 7ed9dd2..5113b41 100644
 --- a/src/main/msp/msp_protocol_v2_betaflight.h
 +++ b/src/main/msp/msp_protocol_v2_betaflight.h
-@@ -38,6 +38,9 @@
+@@ -37,6 +37,9 @@
+ #define MSP2_CLI_SETTING                    0x3010
  #define MSP2_CLI_SETTING_INFO               0x3011
- #define MSP2_CLI_COMMAND                    0x3012
  
 +// Downstream ORQA APB extension: bounded, display-only Rods overlay packets.
 +#define MSP2_RODS_OSD_OVERLAY               0x30F0
 +
- // MSP2_CLI_COMMAND response flags (byte following the u16 total-length header)
- #define MSP2_CLI_COMMAND_FLAG_TRUNCATED     (1 << 0) // output exceeded the pageable buffer
- #define MSP2_CLI_COMMAND_FLAG_REFUSED       (1 << 1) // command refused or paging session mismatch
+ // MSP2_SET_TEXT and MSP2_GET_TEXT variable types
+ #define MSP2TEXT_PILOT_NAME                      1
+ #define MSP2TEXT_CRAFT_NAME                      2
 diff --git a/src/main/osd/osd.c b/src/main/osd/osd.c
-index ec5f69e..e077f1c 100644
+index c4d877b..b646c21 100644
 --- a/src/main/osd/osd.c
 +++ b/src/main/osd/osd.c
-@@ -160,6 +160,99 @@ static displayPort_t *osdDisplayPort;
+@@ -149,6 +149,99 @@ static displayPort_t *osdDisplayPort;
  static osdDisplayPortDevice_e osdDisplayPortDeviceType;
  static bool osdIsReady;
  
@@ -159,10 +159,10 @@ index ec5f69e..e077f1c 100644
 +}
 +#endif
 +
- uint16_t osdGetCapacityAlarm(void)
- {
-     if (currentBatteryProfile && currentBatteryProfile->batteryCapacity > 0) {
-@@ -1389,6 +1482,9 @@ typedef enum {
+ static bool suppressStatsDisplay = false;
+ 
+ static bool backgroundLayerSupported = false;
+@@ -1361,6 +1454,9 @@ typedef enum {
      // Elements are handled in two steps, drawing into a buffer, and then sending to the display
      OSD_STATE_DRAW_ELEMENT,
      OSD_STATE_DISPLAY_ELEMENT,
@@ -172,7 +172,7 @@ index ec5f69e..e077f1c 100644
      OSD_STATE_UPDATE_HEARTBEAT,
      OSD_STATE_COMMIT,
      OSD_STATE_TRANSFER,
-@@ -1601,7 +1697,11 @@ void osdUpdate(timeUs_t currentTimeUs)
+@@ -1573,7 +1669,11 @@ void osdUpdate(timeUs_t currentTimeUs)
              } else
  #endif // USE_SPEC_PREARM_SCREEN
              {
@@ -184,7 +184,7 @@ index ec5f69e..e077f1c 100644
              }
          }
          break;
-@@ -1622,7 +1722,11 @@ void osdUpdate(timeUs_t currentTimeUs)
+@@ -1594,7 +1694,11 @@ void osdUpdate(timeUs_t currentTimeUs)
                      } else
  #endif // USE_SPEC_PREARM_SCREEN
                      {
@@ -196,7 +196,7 @@ index ec5f69e..e077f1c 100644
                      }
                  }
              }
-@@ -1633,12 +1737,23 @@ void osdUpdate(timeUs_t currentTimeUs)
+@@ -1605,12 +1709,23 @@ void osdUpdate(timeUs_t currentTimeUs)
      case OSD_STATE_REFRESH_PREARM:
          if (osdDrawSpec(osdDisplayPort)) {
              // Rendering is complete
@@ -221,7 +221,7 @@ index ec5f69e..e077f1c 100644
          displayCommitTransaction(osdDisplayPort);
  
 diff --git a/src/main/osd/osd.h b/src/main/osd/osd.h
-index 8934fea..7af80e9 100644
+index 0d8e24b..ea59109 100644
 --- a/src/main/osd/osd.h
 +++ b/src/main/osd/osd.h
 @@ -96,6 +96,17 @@ extern const char * const osdTimerSourceNames[OSD_NUM_TIMER_TYPES];
@@ -242,9 +242,9 @@ index 8934fea..7af80e9 100644
  // Default HD OSD canvas size to be applied unless the goggles announce otherwise
  #define OSD_HD_COLS 53
  #define OSD_HD_ROWS 20
-@@ -467,6 +478,12 @@ bool osdUpdateCheck(timeUs_t currentTimeUs, timeDelta_t currentDeltaTimeUs);
+@@ -449,6 +460,12 @@ void osdInit(displayPort_t *osdDisplayPort, osdDisplayPortDevice_e displayPortDe
+ bool osdUpdateCheck(timeUs_t currentTimeUs, timeDelta_t currentDeltaTimeUs);
  void osdUpdate(timeUs_t currentTimeUs);
- uint16_t osdGetCapacityAlarm(void);
  
 +#ifdef USE_RODS_OSD_OVERLAY
 +bool osdRodsOverlayApplyPacket(uint8_t version, uint8_t sequence,
