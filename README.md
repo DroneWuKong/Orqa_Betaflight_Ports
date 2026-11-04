@@ -40,12 +40,13 @@ firmware families. Never flash a build for a different board or sensor variant.
 | h743-icm42688 | H7 QuadCore, dual ICM42688P |
 | apb-mpu6000-icm42605 | APB, MPU6000 + ICM42605 |
 | apb-icm42688 | APB, dual ICM42688P |
+| apb-dual-icm42605 | APB, dual ICM42605; dedicated 2026.6.3 lock |
 | f405-mpu6000 | F405 Pro, MPU6000 |
 | f405-icm42688 | F405 Pro, ICM42688P |
 
 Variants have different sensor rotations. Do not choose by MCU alone.
-Every target is built against both supported upstream lines: Betaflight
-2026.6.2 and 2025.12.5. The 2025.12 artifacts are prefixed `2025.12.5-` so
+The five general targets are built against Betaflight 2026.6.2 and
+2025.12.5. The dual-ICM42605 APB uses its separate reviewed 2026.6.3 lock. The 2025.12 artifacts are prefixed `2025.12.5-` so
 firmware from the two lines cannot silently overwrite or masquerade as each
 other.
 H743's inherited Betaflight rotations differ from some ArduPilot/PX4 definitions:
@@ -53,6 +54,23 @@ they are deliberately not changed without physical evidence. Older H743 MPU6000
 populations are not covered by the H743 artifact. No Wingcore fixed-wing preset
 or autonomous-navigation capability is claimed. F405 keeps the recovered
 four-motor/two-servo/PPM mapping; this is not the eight-motor ArduPilot layout.
+
+## Dual-ICM42605 APB and MRM2-10 recovery
+
+The dual-ICM42605 APB is a third sensor population. The older `v0.1.0-rc3`
+downloads above do **not** include it. Use target `apb-dual-icm42605` with
+`upstream-apb-dual-icm42605.lock.json` (reviewed 2026.6.3 source), not the
+MPU6000/ICM42605 or ICM42688 artifact. Its distinct lock is discovered by CI
+and the manual release verifier. See [board evidence](docs/APB-DUAL-ICM42605.md).
+A binary for this population must come from its matching CI bundle or a
+subsequent approved release; no existing download link is relabeled.
+
+Board firmware does not contain an aircraft tune. Resetting the FC returns
+generic tuning defaults. The [MRM2-10 recovery workflow](docs/MRM2-10-RECOVERY.md)
+provides a versioned, stock-derived tune and an offline plan/rollback/readback
+verifier that preserves unit mappings, alignment, calibration and authority.
+Its configuration was read back on the reference unit after a USB power cycle;
+flight acceptance remains pending.
 
 ## Improvements
 
@@ -85,9 +103,11 @@ the FC alone does not install Linux logging. Older tagged bundles without
 |---|---|---|---|
 | 2026.6 (default) | 2026.6.2 | `upstream.lock.json` | `<target>.*` |
 | 2025.12 | 2025.12.5 | `upstream-2025.12.lock.json` | `2025.12.5-<target>.*` |
+| 2026.6, dual-ICM42605 APB only | 2026.6.3 source 0db924466 | `upstream-apb-dual-icm42605.lock.json` | `apb-dual-icm42605.*` |
 
-Both lock files pin the exact source revision and verified compiler. CI builds
-all five targets from both locks. The older line is deliberately explicit;
+The two general locks and the separate dual-ICM42605 lock pin the exact source
+revision and verified compiler. CI builds the five general targets from both
+general locks plus the dedicated dual-ICM42605 target. The older line is deliberately explicit;
 omitting `--lock` continues to select the default 2026.6 line.
 
 ## Build (Linux x86_64)

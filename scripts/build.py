@@ -46,6 +46,12 @@ def prepare(source, config):
     if not source.exists():
         run("git", "clone", "--depth", "1", "--branch", config["tag"],
             "https://github.com/" + config["repository"] + ".git", source)
+        # Maintenance refs can advance after review. Pin only this newly
+        # created clone; existing checkouts still fail verification unchanged.
+        actual = run("git", "rev-parse", "HEAD", cwd=source, capture=True).strip()
+        if actual != config["revision"]:
+            run("git", "fetch", "--depth", "1", "origin", config["revision"], cwd=source)
+            run("git", "checkout", "--detach", config["revision"], cwd=source)
     verify_revision(source, config)
     if config["kind"] == "ardupilot":
         modules = ["modules/ChibiOS", "modules/waf", "modules/mavlink",
