@@ -68,8 +68,12 @@ successful save or send repeated writes blindly.
 ## Evidence and remaining gate
 
 The reference unit's 56 changed settings persisted after USB reconnection on
-Nov. 4. Its verified dump SHA256 is
+Nov. 4. The verified raw saved-file SHA256 is
+`88693ca7be90269a83f37858d03316e71038a10aa4cbf8e581f32032994a03c0`.
+The original receipt hashed universal-newline CLI text instead:
 `5f2461f5e77cd47341f90eabf3413e2b22ffd356a6d594f1a74798eefadfdf90`.
+Both identities are retained explicitly; use the file digest for byte-for-byte
+archive checks. No tuning coefficient changes with this clarification.
 Motor resources/reordering, corrected gyro setup, receiver/mode mappings,
 calibration, reverse props, Blackbox and manual MSP authority were preserved.
 
