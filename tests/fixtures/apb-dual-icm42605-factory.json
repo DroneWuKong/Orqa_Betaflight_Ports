@@ -1,0 +1,56 @@
+{
+  "mcu_id": "002c00323533510433373532",
+  "firmware": "Betaflight 4.4.1 82c7bc9a4 2025-11-05",
+  "backup_sha256": "f4fa974668dba3cfd3bd9517eb5c4c3d1dc3ce7a360ca5b58a8fe1b137419155",
+  "pins": [
+    "PD12",
+    "PD13",
+    "PB1",
+    "PB0",
+    "PA3",
+    "PA2",
+    "PA1",
+    "PA0"
+  ],
+  "gyro_align": [
+    "CW0_DEG_FLIP",
+    "CW270_DEG_FLIP"
+  ],
+  "timer_occurrences": [
+    1,
+    1,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+  ],
+  "dma_options": [
+    6,
+    7,
+    1,
+    0,
+    5,
+    4,
+    3,
+    2
+  ],
+  "source_note": "Exact-unit pre-update CLI backup recovered November 4; factory motor resources and gyro orientations, not airframe mounting.",
+  "physical_corners_verified_20261104": {
+    "PB1": "rear right",
+    "PB0": "front right",
+    "PD13": "rear left",
+    "PD12": "front left"
+  },
+  "installed_airframe_motor_output_reordering": [
+    2,
+    3,
+    1,
+    0,
+    4,
+    5,
+    6,
+    7
+  ]
+}

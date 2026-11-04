@@ -1,0 +1,40 @@
+# Source: original full CLI SHA256 f4fa974668dba3cfd3bd9517eb5c4c3d1dc3ce7a360ca5b58a8fe1b137419155
+# Historical tuning evidence only, not an apply script for modern firmware.
+profile 0
+
+# profile 0
+set dterm_lpf1_dyn_min_hz = 37
+set dterm_lpf1_dyn_max_hz = 75
+set dterm_lpf1_type = PT3
+set dterm_lpf1_static_hz = 37
+set dterm_lpf2_static_hz = 0
+set anti_gravity_gain = 180
+set iterm_relax_cutoff = 5
+set pidsum_limit = 1000
+set pidsum_limit_yaw = 1000
+set yaw_lowpass_hz = 0
+set p_pitch = 52
+set i_pitch = 112
+set d_pitch = 108
+set f_pitch = 175
+set p_roll = 50
+set i_roll = 107
+set d_roll = 78
+set f_roll = 168
+set p_yaw = 63
+set i_yaw = 134
+set f_yaw = 134
+set d_min_roll = 54
+set d_min_pitch = 74
+set d_max_gain = 50
+set feedforward_smooth_factor = 35
+set feedforward_jitter_factor = 12
+set feedforward_boost = 5
+set simplified_pids_mode = OFF
+set simplified_master_multiplier = 140
+set simplified_i_gain = 120
+set simplified_d_gain = 130
+set simplified_pi_gain = 80
+set simplified_dmax_gain = 130
+set simplified_pitch_d_gain = 120
+set simplified_dterm_filter_multiplier = 50
