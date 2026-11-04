@@ -36,7 +36,17 @@
 #define USE_ACC
 #define USE_GYRO
 
-#if defined(ORQA_APB_IMU_ICM42688P)
+/* Exact-unit 4.4.1 backup: dual ICM42605, gyro 2 CW270FLIP.
+ * This population is distinct from both previously documented variants. */
+#if defined(ORQA_APB_IMU_DUAL_ICM42605) && defined(ORQA_APB_IMU_ICM42688P)
+#error "Select one APB sensor population"
+#endif
+#if defined(ORQA_APB_IMU_DUAL_ICM42605)
+#define USE_ACC_SPI_ICM42605
+#define USE_GYRO_SPI_ICM42605
+#define GYRO_1_ALIGN                    CW0_DEG_FLIP
+#define GYRO_2_ALIGN                    CW270_DEG_FLIP
+#elif defined(ORQA_APB_IMU_ICM42688P)
 #define USE_ACC_SPI_ICM42688P
 #define USE_GYRO_SPI_ICM42688P
 #define GYRO_1_ALIGN                    CW0_DEG_FLIP
@@ -85,7 +95,19 @@
 #define MAX7456_SPI_INSTANCE            SPI3
 #define MAX7456_SPI_CS_PIN              PA15
 
-/* APB motor and servo connector order. */
+/* Exact-unit factory connector assignments for the dual-ICM42605 APB.
+ * Logical motor corner order is an airframe setup item, not an IMU rotation. */
+#if defined(ORQA_APB_IMU_DUAL_ICM42605)
+#define MOTOR1_PIN                      PD12
+#define MOTOR2_PIN                      PD13
+#define MOTOR3_PIN                      PB1
+#define MOTOR4_PIN                      PB0
+#define MOTOR5_PIN                      PA3
+#define MOTOR6_PIN                      PA2
+#define MOTOR7_PIN                      PA1
+#define MOTOR8_PIN                      PA0
+#else
+/* Previously documented APB motor and servo connector order. */
 #define MOTOR1_PIN                      PD13
 #define MOTOR2_PIN                      PD12
 #define MOTOR3_PIN                      PA1
@@ -94,6 +116,7 @@
 #define MOTOR6_PIN                      PA3
 #define MOTOR7_PIN                      PB1
 #define MOTOR8_PIN                      PB0
+#endif
 
 #define SERVO1_PIN                      PE6
 #define SERVO2_PIN                      PE5
@@ -178,6 +201,20 @@
 #define DEFAULT_DSHOT_TELEMETRY         DSHOT_TELEMETRY_ON
 
 /* TIMER_PIN_MAP(index, pin, timer occurrence, DMA option). */
+#if defined(ORQA_APB_IMU_DUAL_ICM42605)
+#define TIMER_PIN_MAPPING \
+    TIMER_PIN_MAP( 0, MOTOR1_PIN, 1,  6) /* PD12 / TIM4_CH1 */ \
+    TIMER_PIN_MAP( 1, MOTOR2_PIN, 1,  7) /* PD13 / TIM4_CH2 */ \
+    TIMER_PIN_MAP( 2, MOTOR3_PIN, 2,  1) /* PB1  / TIM3_CH4 */ \
+    TIMER_PIN_MAP( 3, MOTOR4_PIN, 2,  0) /* PB0  / TIM3_CH3 */ \
+    TIMER_PIN_MAP( 4, MOTOR5_PIN, 2,  5) /* PA3  / TIM5_CH4 */ \
+    TIMER_PIN_MAP( 5, MOTOR6_PIN, 2,  4) /* PA2  / TIM5_CH3 */ \
+    TIMER_PIN_MAP( 6, MOTOR7_PIN, 2,  3) /* PA1  / TIM5_CH2 */ \
+    TIMER_PIN_MAP( 7, MOTOR8_PIN, 2,  2) /* PA0  / TIM5_CH1 */ \
+    TIMER_PIN_MAP( 8, SERVO1_PIN, 1, -1) /* PE6 / TIM15_CH2 */ \
+    TIMER_PIN_MAP( 9, SERVO2_PIN, 1, -1) /* PE5 / TIM15_CH1 */ \
+    TIMER_PIN_MAP(10, BEEPER_PIN, 1, -1) /* PE9 / TIM1_CH1 */
+#else
 #define TIMER_PIN_MAPPING \
     TIMER_PIN_MAP( 0, MOTOR1_PIN, 1,  6) /* PD13 / TIM4_CH2  */ \
     TIMER_PIN_MAP( 1, MOTOR2_PIN, 1,  7) /* PD12 / TIM4_CH1  */ \
@@ -190,6 +227,8 @@
     TIMER_PIN_MAP( 8, SERVO1_PIN, 1, -1) /* PE6  / TIM15_CH2 */ \
     TIMER_PIN_MAP( 9, SERVO2_PIN, 1, -1) /* PE5  / TIM15_CH1 */ \
     TIMER_PIN_MAP(10, BEEPER_PIN, 1, -1) /* PE9  / TIM1_CH1  */
+
+#endif
 
 #define ADC1_DMA_OPT                    8
 #define ADC3_DMA_OPT                    9
